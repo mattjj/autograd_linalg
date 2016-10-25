@@ -26,6 +26,9 @@ def make_grad_solve_triangular(ans, a, b, trans=0, lower=False, **kwargs):
 
     return solve_triangular_grad
 solve_triangular.defgrad(make_grad_solve_triangular)
+solve_triangular.defgrad(lambda ans, a, b, trans=0, lower=False, **kwargs:
+                         lambda g: solve_triangular(a, g, trans=_flip(a, trans), lower=lower),
+                         argnum=1)
 
 solve_trans = lambda L, X: solve_triangular(L, X, lower=True, trans='T')
 conjugate_solve = lambda L, X: solve_trans(L, T(solve_trans(L, T(X))))
