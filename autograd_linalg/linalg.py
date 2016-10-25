@@ -4,7 +4,7 @@ from autograd.core import primitive
 from autograd.scipy.linalg import _flip
 
 import cython_linalg as cyla
-from util import T, symm, al2d, F
+from util import T, symm, al2d
 
 @primitive
 def solve_triangular(a, b, trans=0, lower=False, **kwargs):
@@ -15,7 +15,7 @@ def solve_triangular(a, b, trans=0, lower=False, **kwargs):
     flat_b = np.reshape(b, flat_a.shape[:-1] + (1,))
     flat_result = cyla.solve_triangular(F(flat_a), F(flat_b),
                                         trans=trans, lower=lower)
-    return np.reshape(flat_result, b.shape)
+    return np.reshape(np.transpose(flat_result, (2, 0, 1)), b.shape)
 
 def make_grad_solve_triangular(ans, a, b, trans=0, lower=False, **kwargs):
     tri = anp.tril if (lower ^ (_flip(a, trans) == 'N')) else anp.triu
