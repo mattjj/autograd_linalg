@@ -15,6 +15,12 @@ lower_options = [True, False]
 leading_dims_options = [(), (3,), (3, 2)]
 options = list(product(leading_dims_options, lower_options, trans_options))
 
+def rand_instance(dims, ndim, lower):
+    tri = np.tril if lower else np.triu
+    L = tri(npr.normal(size=dims + (ndim, ndim)))
+    x = npr.normal(size=dims + (ndim,))
+    return L, x
+
 def test_forward():
     def check_forward(L, x, trans, lower):
         ans1 = solve(T(L) if trans in (1, 'T') else L, x)
@@ -22,17 +28,12 @@ def test_forward():
         assert np.allclose(ans1, ans2)
 
     for dims, trans, lower in options:
-        tri = np.tril if lower else np.triu
-        L = tri(npr.normal(size=dims + (ndim, ndim)))
-        x = npr.normal(size=dims + (ndim,))
+        L, x = rand_instance(dims, ndim, lower)
         yield check_forward, L, x, trans, lower
 
 # def grad_arg0():
-#     for leading_dims in [(), 5, (5, 5)]:
-#         for trans in ['T', 'N']:
-#             L = np.tril(npr.normal(size=leading_dims + (N, N)))
-#             x = npr.normal(size=leading_dims + (N,))
-#             yield check_grads, 
+#     for dims, trans, lower in options:
+#         yield check_grads, 
 
 # def grad_arg1():
 #     pass
