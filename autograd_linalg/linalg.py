@@ -10,12 +10,11 @@ from util import T, symm, al2d
 def solve_triangular(a, b, trans=0, lower=False, **kwargs):
     '''Just like scipy.linalg.solve_triangular on real arrays, except this
     function broadcasts over leading dimensions like np.linalg.solve.'''
-    F = lambda X: np.require(np.transpose(X, (1, 2, 0)), np.double, 'F')
     flat_a = np.reshape(a, (-1,) + a.shape[-2:])
     flat_b = np.reshape(b, flat_a.shape[:-1] + (1,))
-    flat_result = cyla.solve_triangular(F(flat_a), F(flat_b),
+    flat_result = cyla.solve_triangular(flat_a, flat_b,
                                         trans=trans, lower=lower)
-    return np.reshape(np.transpose(flat_result, (2, 0, 1)), b.shape)
+    return np.reshape(flat_result, b.shape)
 
 def make_grad_solve_triangular(ans, a, b, trans=0, lower=False, **kwargs):
     tri = anp.tril if (lower ^ (_flip(a, trans) == 'N')) else anp.triu
