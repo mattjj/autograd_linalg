@@ -6,12 +6,14 @@ from autograd.scipy.linalg import _flip
 import cython_linalg as cyla
 from util import T, symm
 
+### solve_triangular
+
 @primitive
 def solve_triangular(a, b, trans=0, lower=False, **kwargs):
     '''Just like scipy.linalg.solve_triangular on real arrays, except this
     function broadcasts over leading dimensions like np.linalg.solve.'''
     flat_a = np.reshape(a, (-1,) + a.shape[-2:])
-    flat_b = np.reshape(b, flat_a.shape[:-1] + (1,))
+    flat_b = np.reshape(b, flat_a.shape[:-1] + (-1,))
     flat_result = cyla.solve_triangular(flat_a, flat_b,
                                         trans=trans, lower=lower)
     return np.reshape(flat_result, b.shape)
@@ -31,7 +33,11 @@ solve_triangular.defgrad(lambda ans, a, b, trans=0, lower=False, **kwargs:
                          lambda g: solve_triangular(a, g, trans=_flip(a, trans), lower=lower),
                          argnum=1)
 
+### cholesky
+
 solve_trans = lambda L, X: solve_triangular(L, X, lower=True, trans='T')
 conjugate_solve = lambda L, X: solve_trans(L, T(solve_trans(L, T(X))))
 phi = lambda X: anp.tril(X) / 1. + anp.eye(X.shape[-1])
-anp.linalg.cholesky.defgrad(lambda g: symm(conjugate_solve(L, phi(anp.matmul(L, g)))))
+
+cholesky = primitive(np.linalg.cholesky)
+cholesky.defgrad(lambda L, A: lambda g: symm(conjugate_solve(L, phi(anp.matmul(L, g)))))
