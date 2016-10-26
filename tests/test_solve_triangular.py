@@ -27,13 +27,20 @@ def test_forward():
         ans2 = solve_triangular(L, x, lower=lower, trans=trans)
         assert np.allclose(ans1, ans2)
 
-    for dims, trans, lower in options:
+    for dims, lower, trans in options:
         L, x = rand_instance(dims, ndim, lower)
         yield check_forward, L, x, trans, lower
 
-# def grad_arg0():
-#     for dims, trans, lower in options:
-#         yield check_grads, 
+# def test_grad_arg0():
+#     for dims, lower, trans in options:
+#         L, x = rand_instance(dims, ndim, lower)
+#         def fun(L):
+#             return to_scalar(solve_triangular(L, x, trans=trans, lower=lower))
+#         yield check_grads, fun, L
 
-# def grad_arg1():
-#     pass
+# def test_grad_arg1():
+#     for dims, lower, trans in options:
+#         L, x = rand_instance(dims, ndim, lower)
+#         def fun(x):
+#             return to_scalar(solve_triangular(L, x, trans=trans, lower=lower))
+#         yield check_grads, fun, x
