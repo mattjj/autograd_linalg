@@ -43,4 +43,18 @@ cholesky = primitive(np.linalg.cholesky)
 cholesky.defgrad(lambda L, A: lambda g: symm(solve_conj(L, phi(anp.matmul(T(L), g)))))
 
 
-### triangular inverse
+### operations on cholesky factors
+
+solve_tri = solve_triangular
+solve_posdef_from_cholesky = lambda L, x: solve_tri(L, solve_tri(L, x), trans='T')
+
+@primitive
+def inv_posdef_from_cholesky(L, lower=True):
+    flat_L = np.reshape(L, (-1,) + L.shape[-2:])
+    return np.reshape(cyla.inv_posdef_from_cholesky(C(flat_L), lower), L.shape)
+
+square_grad = lambda X: lambda g: np.matmul(g, X) + np.matmul(T(X), g)
+inv_grad = lambda Xinv: lambda g: -np.matmul(T(Xinv), np.matmul(g, T(Xinv)))
+compose = lambda f, h: lambda x: f(h(x))
+inv_posdef_from_cholesky.defgrad(lambda LLT_inv, L: lambda g:
+                                 compose(square_grad(L), inv_grad(LLT_inv)))
