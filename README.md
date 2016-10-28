@@ -10,4 +10,3 @@ uses this `solve_triangular` for a more efficient broadcasted implementation.
 ### TODO
 
   1. [ ] \*potri
-  2. [ ] \*potrs

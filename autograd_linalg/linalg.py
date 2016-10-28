@@ -41,3 +41,6 @@ phi = lambda X: anp.tril(X) / (1. + anp.eye(X.shape[-1]))
 
 cholesky = primitive(np.linalg.cholesky)
 cholesky.defgrad(lambda L, A: lambda g: symm(solve_conj(L, phi(anp.matmul(T(L), g)))))
+
+
+### triangular inverse
