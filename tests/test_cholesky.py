@@ -6,16 +6,7 @@ from autograd.numpy.linalg import solve
 from itertools import product
 
 from autograd_linalg.linalg import cholesky
-from autograd_linalg.util import T, symm
-
-def check_symmetric_matrix_grads(fun, *args):
-    symmetrize = lambda A: symm(np.tril(A))
-    new_fun = lambda *args: fun(symmetrize(args[0]), *args[1:])
-    return check_grads(new_fun, *args)
-
-def rand_psd(D):
-    mat = npr.randn(D,D)
-    return np.dot(mat, mat.T) + 5 * np.eye(D)
+from autograd_linalg.util import T, symm, rand_psd, check_symmetric_matrix_grads
 
 def test_cholesky():
     fun = lambda A: to_scalar(cholesky(A))
