@@ -15,8 +15,7 @@ def solve_triangular(a, b, trans=0, lower=False, **kwargs):
     function broadcasts over leading dimensions like np.linalg.solve.'''
     flat_a = np.reshape(a, (-1,) + a.shape[-2:])
     flat_b = np.reshape(b, flat_a.shape[:-1] + (-1,))
-    flat_result = cyla.solve_triangular(C(flat_a), C(flat_b),
-                                        trans=trans, lower=lower)
+    flat_result = cyla.solve_triangular(C(flat_a), C(flat_b), trans=trans, lower=lower)
     return np.reshape(flat_result, b.shape)
 
 def make_grad_solve_triangular(ans, a, b, trans=0, lower=False, **kwargs):
@@ -58,3 +57,17 @@ square_grad = lambda X: lambda g: anp.matmul(g, X) + anp.matmul(T(g), X)
 sym_inv_grad = lambda Xinv: lambda g: -anp.matmul(Xinv, anp.matmul(g, Xinv))
 inv_posdef_from_cholesky.defgrad(
     lambda LLT_inv, L: lambda g: anp.tril(square_grad(L)(sym_inv_grad(LLT_inv)(g))))
+
+
+@primitive
+def solve_posdef_from_cholesky(L, X, lower=True):
+    flat_L = np.reshape(L, (-1,) + L.shape[-2:])
+    flat_X = np.reshape(X, L.shape[:-1] + (-1))
+    flat_result = cyla.solve_posdef_from_cholesky(C(flat_L), C(flat_X), lower=lower)
+    return np.reshape(flat_result, X.shape)
+
+def make_grad_solve_posdef_from_cholesky(ans, L, X, lower=True):
+    def gradfun(g):
+        raise NotImplementedError  # TODO
+    return gradfun
+solve_posdef_from_cholesky.defgrad(make_grad_solve_posdef_from_cholesky)

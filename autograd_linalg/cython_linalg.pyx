@@ -4,7 +4,18 @@
 import numpy as np
 cimport numpy as np
 from cython cimport floating
-from scipy.linalg.cython_lapack cimport dtrtrs, strtrs, dpotri, spotri
+from scipy.linalg.cython_lapack cimport dtrtrs, strtrs, dpotri, spotri, \
+    dpotrs, spotrs
+
+### util
+
+cdef inline void copy_lower_upper(floating[:,::1] L):
+    cdef int i, j, N = L.shape[0]
+    for i in range(N):
+        for j in range(i):
+            L[j,i] = L[i,j]
+
+### main functions
 
 def solve_triangular(floating[:,:,::1] L, floating[:,:,::1] X, trans, lower):
     cdef int i, K = L.shape[0]
@@ -15,19 +26,19 @@ def solve_triangular(floating[:,:,::1] L, floating[:,:,::1] X, trans, lower):
     cdef char _lower = 'U' if lower else 'L'
 
     for i in range(K):
-        _solve_triangular(L[i,:,:], X[i,:,:], out[i,:,:], _trans, _lower)
+        _solve_triangular(L[i,:,:], out[i,:,:], _trans, _lower)
 
     return np.swapaxes(out, -1, -2)
 
 cdef inline void _solve_triangular(
-        floating[:,::1] L, floating[:,::1] X, floating[:,::1] out,
+        floating[:,::1] L, floating[:,::1] X,
         char trans, char lower) nogil:
-    cdef int M = X.shape[0], N = X.shape[1], info
+    cdef int M = X.shape[1], N = X.shape[0], info
 
     if floating is double:
-        dtrtrs(&lower, &trans, 'N', &M, &N, &L[0,0], &M, &out[0,0], &M, &info)
+        dtrtrs(&lower, &trans, 'N', &M, &N, &L[0,0], &M, &X[0,0], &M, &info)
     else:
-        strtrs(&lower, &trans, 'N', &M, &N, &L[0,0], &M, &out[0,0], &M, &info)
+        strtrs(&lower, &trans, 'N', &M, &N, &L[0,0], &M, &X[0,0], &M, &info)
 
 
 def inv_posdef_from_cholesky(floating[:,:,::1] L, lower):
@@ -53,8 +64,23 @@ cdef inline void _inv_posdef_from_cholesky(floating[:,::1] L, char lower):
     copy_lower_upper(L)
 
 
-cdef inline void copy_lower_upper(floating[:,::1] L):
-    cdef int i, j, N = L.shape[0]
-    for i in range(N):
-        for j in range(i):
-            L[j,i] = L[i,j]
+def solve_posdef_from_cholesky(floating[:,:,::1] L, floating[:,:,::1] X, lower):
+    cdef int i, K = L.shape[0]
+    cdef floating[:,:,::1] out = np.copy(np.swapaxes(X, -1, -2), 'C')
+
+    # flip this because we're working in C order, while LAPACK is F order
+    cdef char _lower = 'U' if lower else 'L'
+
+    for i in range(K):
+        _solve_posdef_from_cholesky(L[i,:,:], out[i,:,:], _lower)
+
+    return np.swapaxes(out, -1, -2)
+
+cdef inline void _solve_posdef_from_cholesky(
+        floating[:,::1] L, floating[:,::1] X, char lower) nogil:
+    cdef int M = X.shape[1], N = X.shape[0], info
+
+    if floating is double:
+        dpotrs(&lower, &M, &N, &L[0,0], &M, &X[0,0], &M, &info)
+    else:
+        spotrs(&lower, &M, &N, &L[0,0], &M, &X[0,0], &M, &info)

@@ -6,7 +6,3 @@ numbers.)
 This library also includes an autograd gradient definition of
 `solve_triangular`, and an alternative gradient definition for `cholesky` that
 uses this `solve_triangular` for a more efficient broadcasted implementation.
-
-### TODO
-
-  1. [ ] \*potri
